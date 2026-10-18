@@ -1,140 +1,133 @@
-import React, { useState } from 'react';
-import { Menu, X, BrainCircuit, Bell, User, LogOut, LogIn } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Menu, X, LogOut, LogIn } from 'lucide-react';
+import { NavLink, Link, useLocation } from 'react-router-dom';
+import Logo from './Logo';
+import Avatar from './Avatar';
 
-const Navbar = ({ links = [], isLoggedIn, onLogout }) => {
+const Navbar = ({ links = [], user, onLogout }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+    const location = useLocation();
+
+    // Close the mobile menu whenever the route changes.
+    const [menuPath, setMenuPath] = useState(location.pathname);
+    if (menuPath !== location.pathname) {
+        setMenuPath(location.pathname);
+        setIsOpen(false);
+    }
+
+    useEffect(() => {
+        const onScroll = () => setScrolled(window.scrollY > 4);
+        const onKey = (e) => e.key === 'Escape' && setIsOpen(false);
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('keydown', onKey);
+        return () => {
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('keydown', onKey);
+        };
+    }, []);
+
+    const displayName = user?.name || user?.email?.split('@')[0];
 
     return (
-        <nav className="fixed w-full z-50 top-0 start-0 border-b border-white/20 bg-white/70 backdrop-blur-xl dark:bg-gray-900/70 dark:border-gray-800 transition-all duration-300 shadow-sm">
-            <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+        <nav
+            className={`fixed inset-x-0 top-0 z-50 border-b backdrop-blur-xl transition-colors duration-300 ${scrolled || isOpen ? 'border-line bg-surface/85' : 'border-transparent bg-bg/60'}`}
+            aria-label="Main"
+        >
+            <div className="container-page flex h-16 items-center justify-between gap-4">
+                <Logo />
 
-                {/* LEFT: Brand/Logo Area */}
-                <NavLink to="/" className="flex items-center space-x-2 rtl:space-x-reverse group">
-                    <div className="p-2 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl text-white shadow-lg group-hover:shadow-blue-500/30 transition-shadow duration-300">
-                        <BrainCircuit className="w-6 h-6" />
-                    </div>
-                    <span className="self-center text-2xl font-bold whitespace-nowrap bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent hidden sm:block">
-                        AI Quiz
-                    </span>
-                </NavLink>
-
-                {/* CENTER: Links (Desktop) */}
-                <div className="hidden md:block">
-                    <ul className="flex space-x-2">
-                        {links.map((link, index) => (
-                            <li key={index}>
-                                <NavLink
-                                    to={link.path || '#'}
-                                    className={({ isActive }) => `
-                    block py-2 px-4 rounded-full text-sm font-medium transition-all duration-200
-                    ${isActive
-                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
-                                            : 'text-gray-700 hover:bg-white/50 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'}
-                    `}
-                                >
-                                    {link.name}
-                                </NavLink>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
-                {/* RIGHT: Actions + Mobile Menu Button */}
-                <div className="flex items-center space-x-3 md:space-x-4 rtl:space-x-reverse">
-
-                    {/* Notification Bell (Only show if logged in? Optionally always show) */}
-                    <button type="button" className="relative p-2 text-gray-500 rounded-full hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition">
-                        <span className="sr-only">View notifications</span>
-                        <Bell className="w-6 h-6" />
-                        <div className="absolute inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 border-2 border-white rounded-full -top-1 -end-1 dark:border-gray-900">
-                            3
-                        </div>
-                    </button>
-
-                    {/* User Profile / Auth */}
-                    {isLoggedIn ? (
-                        <div className="flex items-center gap-2">
-                            <button className="flex text-sm bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600 p-1">
-                                <span className="sr-only">Open user menu</span>
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold">
-                                    P
-                                </div>
-                            </button>
-                            {/* Logout Button */}
-                            <button
-                                onClick={onLogout}
-                                className="hidden sm:flex items-center p-2 text-gray-500 rounded-full hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition"
-                                title="Logout"
+                {/* Desktop links */}
+                <ul className="hidden items-center gap-1 lg:flex">
+                    {links.map((link) => (
+                        <li key={link.path}>
+                            <NavLink
+                                to={link.path}
+                                end={link.path === '/'}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive
+                                        ? 'bg-brand-soft text-brand-ink'
+                                        : 'text-muted hover:bg-surface-2 hover:text-fg'}`
+                                }
                             >
-                                <LogOut className="w-5 h-5" />
+                                <link.icon className="hidden size-4 xl:block" aria-hidden="true" />
+                                {link.name}
+                            </NavLink>
+                        </li>
+                    ))}
+                </ul>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                    {user ? (
+                        <>
+                            <Link to="/profile" className="flex items-center gap-2 rounded-full p-0.5 pr-1 transition hover:bg-surface-2 sm:pr-3" title="Your profile">
+                                <Avatar name={displayName} size="sm" />
+                                <span className="hidden max-w-32 truncate text-sm font-medium sm:block">{displayName}</span>
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={onLogout}
+                                className="btn btn-ghost hidden size-9 px-0 sm:inline-flex"
+                                title="Log out"
+                            >
+                                <LogOut className="size-4" aria-hidden="true" />
+                                <span className="sr-only">Log out</span>
                             </button>
-                        </div>
+                        </>
                     ) : (
-                        <NavLink
-                            to="/login"
-                            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 flex items-center gap-2"
-                        >
-                            <LogIn className="w-4 h-4" />
-                            <span className="hidden sm:inline">Login</span>
-                        </NavLink>
+                        <Link to="/login" className="btn btn-primary btn-sm">
+                            <LogIn className="size-4" aria-hidden="true" />
+                            Sign in
+                        </Link>
                     )}
 
-                    {/* Mobile Menu Button */}
                     <button
-                        onClick={() => setIsOpen(!isOpen)}
                         type="button"
-                        className="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600 transition"
-                        aria-controls="navbar-default"
+                        onClick={() => setIsOpen((open) => !open)}
+                        className="btn btn-ghost size-10 px-0 lg:hidden"
+                        aria-controls="mobile-menu"
                         aria-expanded={isOpen}
                     >
-                        <span className="sr-only">Open main menu</span>
-                        {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                        <span className="sr-only">{isOpen ? 'Close menu' : 'Open menu'}</span>
+                        {isOpen ? <X className="size-5" /> : <Menu className="size-5" />}
                     </button>
                 </div>
+            </div>
 
-                {/* Mobile Menu (Dropdown) */}
-                <div className={`${isOpen ? 'block' : 'hidden'} w-full md:hidden mt-4 border-t border-gray-100 dark:border-gray-800 pt-4`} id="navbar-default">
-                    <ul className="flex flex-col space-y-2">
-                        {links.map((link, index) => (
-                            <li key={index}>
-                                <NavLink
-                                    to={link.path || '#'}
-                                    onClick={() => setIsOpen(false)}
-                                    className={({ isActive }) => `
-                    block py-2 px-4 rounded-lg font-medium transition-all duration-200
-                    ${isActive
-                                            ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}
-                  `}
-                                >
-                                    {link.name}
-                                </NavLink>
-                            </li>
-                        ))}
-                        {/* Mobile Logout if logged in */}
-                        {isLoggedIn ? (
-                            <li>
-                                <button
-                                    onClick={() => { onLogout(); setIsOpen(false); }}
-                                    className="w-full text-left block py-2 px-4 rounded-lg font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-all"
-                                >
-                                    Logout
-                                </button>
-                            </li>
-                        ) : (
-                            <li>
-                                <NavLink
-                                    to="/login"
-                                    onClick={() => setIsOpen(false)}
-                                    className="w-full text-left block py-2 px-4 rounded-lg font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-all"
-                                >
-                                    Login
-                                </NavLink>
-                            </li>
-                        )}
-                    </ul>
-                </div>
+            {/* Mobile menu */}
+            <div id="mobile-menu" className={`${isOpen ? 'block' : 'hidden'} border-t border-line lg:hidden`}>
+                <ul className="container-page grid grid-cols-2 gap-2 py-4">
+                    {links.map((link) => (
+                        <li key={link.path}>
+                            <NavLink
+                                to={link.path}
+                                end={link.path === '/'}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${isActive
+                                        ? 'bg-brand-soft text-brand-ink'
+                                        : 'text-fg hover:bg-surface-2'}`
+                                }
+                            >
+                                <link.icon className="size-[18px]" aria-hidden="true" />
+                                {link.name}
+                            </NavLink>
+                        </li>
+                    ))}
+                    {user && (
+                        <li>
+                            <button
+                                type="button"
+                                onClick={onLogout}
+                                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-danger transition-colors hover:bg-danger-soft"
+                            >
+                                <LogOut className="size-[18px]" aria-hidden="true" />
+                                Log out
+                            </button>
+                        </li>
+                    )}
+                </ul>
             </div>
         </nav>
     );

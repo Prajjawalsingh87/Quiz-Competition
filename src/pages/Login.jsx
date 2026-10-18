@@ -1,141 +1,175 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, LogIn, ArrowLeft, KeyRound, CheckCircle2 } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Mail, Lock, ArrowLeft, KeyRound, ShieldCheck, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import useDocumentTitle from '../utils/useDocumentTitle';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const Login = ({ onLogin }) => {
+    useDocumentTitle('Sign in');
     const [step, setStep] = useState(1); // 1: Credentials, 2: OTP
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [otp, setOtp] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleCredentialsSubmit = (e) => {
         e.preventDefault();
-        if (email && password) {
-            // Simulate sending OTP
-            setStep(2);
+        if (!EMAIL_PATTERN.test(email.trim())) {
+            setError('Please enter a valid email address.');
+            return;
         }
+        if (!password) {
+            setError('Please enter your password.');
+            return;
+        }
+        setError('');
+        setLoading(true);
+        // Simulate sending OTP
+        setTimeout(() => {
+            setLoading(false);
+            setStep(2);
+        }, 600);
     };
 
     const handleOtpSubmit = (e) => {
         e.preventDefault();
-        if (otp) {
-            // Simulate OTP verification
-            onLogin();
-            navigate('/');
+        if (!/^\d{4,6}$/.test(otp)) {
+            setError('Enter the 4–6 digit code from your email.');
+            return;
         }
+        setError('');
+        setLoading(true);
+        // Simulate OTP verification
+        setTimeout(() => {
+            onLogin(email.trim());
+            navigate('/');
+        }, 500);
     };
 
+    const errorBox = error && (
+        <p className="flex items-center gap-2 rounded-xl bg-danger-soft px-3.5 py-2.5 text-sm font-medium text-danger" role="alert">
+            <AlertCircle className="size-4 shrink-0" aria-hidden="true" /> {error}
+        </p>
+    );
+
     return (
-        <div className="min-h-[80vh] flex items-center justify-center px-4">
-            <div className="w-full max-w-md bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-gray-700 p-8 transform transition-all animate-fade-in-up">
+        <div className="flex min-h-[70vh] items-center justify-center">
+            <div className="card w-full max-w-md animate-fade-up p-6 shadow-lift sm:p-8">
 
                 <div className="mb-8 text-center">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-4 text-blue-600 dark:text-blue-400">
-                        {step === 1 ? <LogIn className="w-8 h-8" /> : <KeyRound className="w-8 h-8" />}
+                    <div className="mb-4 inline-flex size-14 items-center justify-center rounded-2xl bg-brand-soft text-brand-ink">
+                        {step === 1 ? <img src="/favicon.svg" alt="" className="size-9" /> : <ShieldCheck className="size-7" aria-hidden="true" />}
                     </div>
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                        {step === 1 ? 'Welcome Back' : 'Verify Login'}
-                    </h2>
-                    <p className="text-gray-500 dark:text-gray-400 mt-2">
-                        {step === 1 ? 'Please enter your details to sign in' : `Enter the code sent to ${email}`}
+                    <h1 className="text-2xl font-bold sm:text-3xl">
+                        {step === 1 ? 'Welcome back' : 'Check your inbox'}
+                    </h1>
+                    <p className="mt-2 text-muted">
+                        {step === 1 ? 'Sign in to save your scores and play with friends.' : <>We sent a code to <span className="font-medium break-all text-fg">{email}</span></>}
                     </p>
                 </div>
 
+                {/* Step indicator */}
+                <div className="mb-6 flex gap-2" aria-hidden="true">
+                    <span className="h-1.5 flex-1 rounded-full bg-brand" />
+                    <span className={`h-1.5 flex-1 rounded-full transition-colors ${step === 2 ? 'bg-brand' : 'bg-surface-2'}`} />
+                </div>
+
                 {step === 1 ? (
-                    <form onSubmit={handleCredentialsSubmit} className="space-y-6">
+                    <form onSubmit={handleCredentialsSubmit} noValidate className="space-y-5">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Email Address
-                            </label>
+                            <label htmlFor="email" className="label">Email address</label>
                             <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                    <Mail className="w-5 h-5" />
-                                </div>
+                                <Mail className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" aria-hidden="true" />
                                 <input
+                                    id="email"
                                     type="email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                                    onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                                    className="input pl-10"
                                     placeholder="name@example.com"
+                                    autoComplete="email"
                                     required
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Password
-                            </label>
+                            <label htmlFor="password" className="label">Password</label>
                             <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                    <Lock className="w-5 h-5" />
-                                </div>
+                                <Lock className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" aria-hidden="true" />
                                 <input
-                                    type="password"
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                                    placeholder="••••••••"
+                                    onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                                    className="input pr-11 pl-10"
+                                    placeholder="Enter your password"
+                                    autoComplete="current-password"
                                     required
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword((s) => !s)}
+                                    className="absolute top-1/2 right-1.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted hover:bg-surface-2 hover:text-fg"
+                                >
+                                    {showPassword ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
+                                    <span className="sr-only">{showPassword ? 'Hide password' : 'Show password'}</span>
+                                </button>
                             </div>
                         </div>
 
-                        <button
-                            type="submit"
-                            className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2"
-                        >
-                            Get OTP Code <KeyRound className="w-4 h-4" />
+                        {errorBox}
+
+                        <button type="submit" disabled={loading} className="btn btn-primary btn-lg w-full">
+                            {loading ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <KeyRound className="size-4" aria-hidden="true" />}
+                            {loading ? 'Sending code…' : 'Get OTP code'}
                         </button>
                     </form>
                 ) : (
-                    <form onSubmit={handleOtpSubmit} className="space-y-6">
+                    <form onSubmit={handleOtpSubmit} noValidate className="space-y-5">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                One-Time Password
-                            </label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                    <CheckCircle2 className="w-5 h-5" />
-                                </div>
-                                <input
-                                    type="text"
-                                    value={otp}
-                                    onChange={(e) => setOtp(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none tracking-widest text-center text-lg font-bold"
-                                    placeholder="1 2 3 4"
-                                    maxLength={6}
-                                    required
-                                    autoFocus
-                                />
-                            </div>
+                            <label htmlFor="otp" className="label">One-time code</label>
+                            <input
+                                id="otp"
+                                type="text"
+                                inputMode="numeric"
+                                autoComplete="one-time-code"
+                                value={otp}
+                                onChange={(e) => { setOtp(e.target.value.replace(/\D/g, '')); setError(''); }}
+                                className="input h-14 text-center font-mono text-2xl font-bold tracking-[0.5em]"
+                                placeholder="••••••"
+                                maxLength={6}
+                                required
+                                autoFocus
+                            />
+                            <p className="mt-2 text-xs text-muted">Demo mode: any 4–6 digit code works.</p>
                         </div>
 
-                        <button
-                            type="submit"
-                            className="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-green-500/30 transform hover:-translate-y-0.5 transition-all duration-200"
-                        >
-                            Verify & Login
+                        {errorBox}
+
+                        <button type="submit" disabled={loading} className="btn btn-primary btn-lg w-full">
+                            {loading && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+                            {loading ? 'Verifying…' : 'Verify & sign in'}
                         </button>
 
                         <button
                             type="button"
-                            onClick={() => setStep(1)}
-                            className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            onClick={() => { setStep(1); setOtp(''); setError(''); }}
+                            className="btn btn-ghost w-full"
                         >
-                            Change Email / Resend
+                            Change email / resend code
                         </button>
                     </form>
                 )}
 
-                <div className="mt-6 text-center">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center justify-center gap-1 mx-auto"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> Back to Home
-                    </button>
+                <div className="mt-6 border-t border-line pt-5 text-center">
+                    <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-fg">
+                        <ArrowLeft className="size-4" aria-hidden="true" /> Back to home
+                    </Link>
                 </div>
             </div>
         </div>
