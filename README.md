@@ -1,16 +1,44 @@
-# React + Vite
+# 🧠 Quiz Competition
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A timed quiz game: play solo, create or join rooms with a code, review your answers, and track your history. Built with React, React Router and Tailwind CSS.
 
-Currently, two official plugins are available:
+**🔗 Live:** https://quiz-competition-plum.vercel.app
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Features
 
-## React Compiler
+- **Play solo** by picking a topic, or **create a room** (code + copyable invite link) and **join by code or link**
+- **Timed questions** with a countdown, progress bar, speed bonus and streak badge
+- Clear **selected / correct / wrong** answer states; keyboard shortcuts (1–4 to pick, Enter to confirm)
+- **Results** with a score ring and an answer-by-answer review, saved to **History**
+- **Profile, Friends, Chat and Search** pages
+- Sticky navbar with a mobile menu, automatic dark mode, 404 page
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+> **Demo mode:** there is no backend yet. Login accepts any password and 4–6 digit code, data comes from sample files in `src/data/`, and history/session are stored in the browser. Rooms share a topic but are not live multiplayer.
 
-## Expanding the ESLint configuration
+## 🛠 Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+React 19 · React Router 7 · Vite 7 · Tailwind CSS 4 · lucide-react icons
+
+## ▶️ Run locally
+
+```bash
+git clone https://github.com/Prajjawalsingh87/Quiz-Competition.git
+cd Quiz-Competition
+npm install
+npm run dev        # http://localhost:5173
+```
+
+## 📂 Project structure
+
+```
+src/
+├── pages/            # Home, Quiz, History, Profile, Friends, Chat, Search, Login, NotFound
+├── components/       # Navbar, Footer, Avatar, EmptyState, ...
+│   └── quiz/         # QuizPlayer, QuizResults
+├── data/             # sample questions and social data
+└── utils/            # localStorage helpers, page titles
+```
+
+## 🚀 Deployment
+
+Deployed on **Vercel** (`vercel.json` rewrites all routes to `index.html` so deep links like `/quiz` work); every push to `main` deploys to production.
