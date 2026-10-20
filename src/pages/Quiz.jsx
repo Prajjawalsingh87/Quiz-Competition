@@ -1,87 +1,83 @@
-import React, { useState } from 'react';
-import { Plus, Users, Link as LinkIcon, ArrowRight, Play } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { questions, readHistory } from "../data/questions";
 
-const Quiz = () => {
-    const [roomId, setRoomId] = useState('');
+export default function Quiz() {
+  const [topic, setTopic] = useState("Mixed");
+  const [round, setRound] = useState(null);
+  const [answers, setAnswers] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [seconds, setSeconds] = useState(60);
+  const [saved, setSaved] = useState("");
+  const deadline = useRef(0);
+  const answered = useRef(false);
+  const index = answers.length;
+  const finished = round && index === round.length;
+  const score = round ? answers.filter((a, i) => a === round[i].answer).length : 0;
 
-    const handleCreateRoom = () => {
-        // Generate random room ID logic or API call would go here
-        alert("Room created! (Mock action)");
-    };
+  useEffect(() => {
+    if (!round || finished) return;
+    const timer = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((deadline.current - Date.now()) / 1000));
+      setSeconds(remaining);
+      if (!remaining && !answered.current) {
+        answered.current = true;
+        setAnswers(prev => [...prev, null]);
+        setSelected(null);
+      }
+    }, 250);
+    return () => clearInterval(timer);
+  }, [round, finished, index]);
 
-    const handleJoinRoom = (e) => {
-        e.preventDefault();
-        if (roomId.trim()) {
-            // Logic to validate and join room
-            alert(`Joining room: ${roomId} (Mock action)`);
-        }
-    };
+  useEffect(() => {
+    if (!round || finished) return;
+    deadline.current = Date.now() + 60000;
+    answered.current = false;
+  }, [round, finished, index]);
 
-    return (
-        <div className="pt-24 px-4 pb-12 max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-                    Ready to Compete?
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 text-lg">
-                    Create your own quiz room or join a friend's challenge.
-                </p>
-            </div>
+  const start = () => {
+    const pool = questions.filter(q => topic === "Mixed" || q.topic === topic).slice();
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    setAnswers([]); setSelected(null); setSeconds(60); setSaved("");
+    setRound(pool.slice(0, 5));
+  };
+  const next = () => {
+    if (answered.current || selected === null) return;
+    answered.current = true;
+    setAnswers(prev => [...prev, selected]);
+    setSelected(null); setSeconds(60);
+  };
+  const save = () => {
+    if (saved) return;
+    const result = { id: crypto.randomUUID(), date: new Date().toISOString(), topic, score, total: round.length };
+    try {
+      localStorage.setItem("quiz:history", JSON.stringify([result, ...readHistory()].slice(0, 50)));
+      setSaved("Result saved on this device.");
+    } catch { setSaved("Browser storage is unavailable. Your result is shown below but could not be saved."); }
+  };
 
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-
-                {/* Card 1: Create Quiz */}
-                <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-8 border border-white/20 dark:border-gray-700 shadow-lg hover:shadow-blue-500/10 transition-all duration-300 group">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-6 group-hover:scale-110 transition-transform">
-                        <Plus className="w-8 h-8" />
-                    </div>
-                    <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Create a Room</h2>
-                    <p className="text-gray-500 dark:text-gray-400 mb-8">
-                        Host a new quiz game. Choose your topics, set the rules, and invite your friends to compete in real-time.
-                    </p>
-                    <button
-                        onClick={handleCreateRoom}
-                        className="w-full py-3.5 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
-                    >
-                        Create New Quiz <ArrowRight className="w-4 h-4" />
-                    </button>
-                </div>
-
-                {/* Card 2: Join Quiz */}
-                <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-8 border border-white/20 dark:border-gray-700 shadow-lg hover:shadow-purple-500/10 transition-all duration-300 group">
-                    <div className="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-6 group-hover:scale-110 transition-transform">
-                        <Users className="w-8 h-8" />
-                    </div>
-                    <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Join a Room</h2>
-                    <p className="text-gray-500 dark:text-gray-400 mb-6">
-                        Have a room ID or invite link? Enter it below to jump straight into the action.
-                    </p>
-
-                    <form onSubmit={handleJoinRoom} className="space-y-4">
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                <LinkIcon className="w-5 h-5" />
-                            </div>
-                            <input
-                                type="text"
-                                value={roomId}
-                                onChange={(e) => setRoomId(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none"
-                                placeholder="Enter Room ID or Link"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            className="w-full py-3.5 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
-                        >
-                            Join Game <Play className="w-4 h-4 fill-current" />
-                        </button>
-                    </form>
-                </div>
-
-            </div>
-        </div>
-    );
-};
-
-export default Quiz;
+  if (!round) return <section className="quiz-card quiz-focus">
+    <p className="quiz-eyebrow">Your next five minutes</p><h1>Choose your challenge.</h1>
+    <p>Five questions. One minute each. No sign-in needed.</p>
+    <label htmlFor="topic">Topic</label>
+    <select id="topic" className="studio-input" value={topic} onChange={e => setTopic(e.target.value)}>{["Mixed", "Web", "Systems"].map(t => <option key={t}>{t}</option>)}</select>
+    <button className="studio-button studio-primary" onClick={start}>Start quiz →</button>
+  </section>;
+  if (finished) return <section className="quiz-card quiz-focus">
+    <p className="quiz-eyebrow">Round complete</p><h1>{score} / {round.length}</h1><p>Every answer is a chance to learn.</p>
+    <div className="studio-toolbar"><button className="studio-button studio-primary" onClick={save} disabled={!!saved}>Save result</button><button className="studio-button" onClick={() => setRound(null)}>Practice again</button><Link className="studio-button" to="/history">History</Link></div>
+    <p role="status" className="studio-note">{saved}</p>
+    {round.map((q, i) => <article className="quiz-review" key={q.question}><h2>{i + 1}. {q.question}</h2><p className={answers[i] === q.answer ? "quiz-correct" : "quiz-incorrect"}>Your answer: {answers[i] === null ? "Time expired" : q.choices[answers[i]]}</p><p><strong>Correct:</strong> {q.choices[q.answer]}</p><p>{q.explanation}</p></article>)}
+  </section>;
+  const q = round[index];
+  return <section className="quiz-card quiz-focus">
+    <div className="quiz-meta"><span>Question {index + 1} of {round.length}</span><span role="timer" aria-label="Seconds remaining">{seconds}s</span></div>
+    <progress aria-label="Quiz progress" value={index} max={round.length} />
+    <h1>{q.question}</h1>
+    <div className="quiz-answers">{q.choices.map((choice, i) => <button key={choice} className="studio-button" aria-pressed={selected === i} onClick={() => setSelected(i)}>{String.fromCharCode(65 + i)}. {choice}</button>)}</div>
+    <button className="studio-button studio-primary" disabled={selected === null} onClick={next}>{index === round.length - 1 ? "See results" : "Next question →"}</button>
+  </section>;
+}

@@ -1,56 +1,21 @@
-import { useState } from 'react';
-import Navbar from './components/Navbar';
-import { Routes, Route, useNavigate } from 'react-router-dom';
-import Home from './pages/Home';
-import Profile from './pages/Profile';
-import Friends from './pages/Friends';
-import Chat from './pages/Chat';
-import Search from './pages/Search';
-import Quiz from './pages/Quiz';
-import History from './pages/History';
-import Login from './pages/Login';
+import { NavLink, Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
+import Quiz from "./pages/Quiz";
+import History from "./pages/History";
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const navigate = useNavigate();
-
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    navigate('/'); // Optional: redirect to home on logout
-  };
-
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Quiz', path: '/quiz' },
-    { name: 'History', path: '/history' },
-    { name: 'Profile', path: '/profile' },
-    { name: 'Friends', path: '/friends' },
-    { name: 'Chat', path: '/chat' },
-    { name: 'Search', path: '/search' },
-  ];
-
-  return (
-    <div className="min-h-screen text-gray-900 dark:text-white font-sans selection:bg-purple-500 selection:text-white">
-      <Navbar links={navLinks} isLoggedIn={isLoggedIn} onLogout={handleLogout} />
-
-      <div className="pt-4 px-4 max-w-screen-xl mx-auto">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/quiz" element={<Quiz />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/friends" element={<Friends />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/login" element={<Login onLogin={handleLogin} />} />
-        </Routes>
-      </div>
-    </div>
-  )
+export default function App() {
+  return <div className="studio-page">
+    <a href="#main" className="skip">Skip to content</a>
+    <header className="quiz-header">
+      <NavLink className="quiz-brand" to="/">Q<span>Quiz Studio</span></NavLink>
+      <nav aria-label="Main"><NavLink to="/" end>Overview</NavLink><NavLink to="/quiz">Practice</NavLink><NavLink to="/history">History</NavLink></nav>
+    </header>
+    <main id="main" className="quiz-main"><Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/quiz" element={<Quiz />} />
+      <Route path="/history" element={<History />} />
+      <Route path="*" element={<section className="quiz-card"><h1>Practice at your pace</h1><p>Accounts, multiplayer rooms and chat are not available in this version. Solo quizzes work without signing in.</p><NavLink className="studio-button studio-primary" to="/quiz">Start a quiz</NavLink></section>} />
+    </Routes></main>
+    <footer className="quiz-footer">Built by Prajjawal · Progress stays in this browser</footer>
+  </div>;
 }
-
-export default App
