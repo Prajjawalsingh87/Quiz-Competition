@@ -10,7 +10,7 @@ const verdict = (pct) => {
     return { title: 'Keep practising', note: 'Every expert started here. Try another round!' };
 };
 
-const QuizResults = ({ topic, result, onReplay, onExit }) => {
+const QuizResults = ({ topic, result, onReplay, replayLabel = 'Play again', onReview, mistakesLeft = 0, onExit }) => {
     const { answers, score } = result;
     const correct = answers.filter((a) => a.correct).length;
     const pct = Math.round((correct / answers.length) * 100);
@@ -39,7 +39,7 @@ const QuizResults = ({ topic, result, onReplay, onExit }) => {
                     {[
                         { icon: Trophy, label: 'Score', value: score },
                         { icon: Target, label: 'Correct', value: `${correct}/${answers.length}` },
-                        { icon: Zap, label: 'Topic', value: topic.name.split(' ')[0] },
+                        { icon: Zap, label: 'Topic', value: topic.id === 'review' ? 'Review' : topic.name.split(' ')[0] },
                     ].map((s) => (
                         <div key={s.label} className="px-2 py-5">
                             <dt className="flex items-center justify-center gap-1.5 text-xs font-medium text-muted">
@@ -52,9 +52,11 @@ const QuizResults = ({ topic, result, onReplay, onExit }) => {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-                <button type="button" onClick={onReplay} className="btn btn-primary btn-lg sm:flex-1">
-                    <RotateCcw className="size-4" aria-hidden="true" /> Play again
-                </button>
+                {onReplay && (
+                    <button type="button" onClick={onReplay} className="btn btn-primary btn-lg sm:flex-1">
+                        <RotateCcw className="size-4" aria-hidden="true" /> {replayLabel}
+                    </button>
+                )}
                 <button type="button" onClick={onExit} className="btn btn-secondary btn-lg sm:flex-1">
                     <LayoutGrid className="size-4" aria-hidden="true" /> New topic
                 </button>
@@ -64,7 +66,14 @@ const QuizResults = ({ topic, result, onReplay, onExit }) => {
             </div>
 
             <section className="card p-5 sm:p-6" aria-labelledby="review-title">
-                <h2 id="review-title" className="mb-4 text-lg font-bold">Answer review</h2>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <h2 id="review-title" className="text-lg font-bold">Answer review</h2>
+                    {onReview && (
+                        <button type="button" onClick={onReview} className="btn btn-secondary btn-sm">
+                            <RotateCcw className="size-4" aria-hidden="true" /> Practise mistakes ({mistakesLeft})
+                        </button>
+                    )}
+                </div>
                 <ol className="space-y-3">
                     {answers.map((a, i) => (
                         <li key={i} className="flex gap-3 rounded-xl border border-line p-4">

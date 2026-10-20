@@ -51,8 +51,8 @@ const QuizPlayer = ({ topic, questions, roomCode, onFinish, onQuit }) => {
         setRevealed(true);
         setScore((s) => s + points);
         setStreak((s) => (correct ? s + 1 : 0));
-        setAnswers((prev) => [...prev, { question: question.q, options: question.options, answer: question.answer, chosen: choice, correct, points }]);
-    }, [question, timeLeft]);
+        setAnswers((prev) => [...prev, { question: question.q, topicId: question.topicId || topic.id, options: question.options, answer: question.answer, chosen: choice, correct, points }]);
+    }, [question, timeLeft, topic.id]);
 
     // Countdown — runs out to an automatic "no answer".
     useEffect(() => {
@@ -116,7 +116,7 @@ const QuizPlayer = ({ topic, questions, roomCode, onFinish, onQuit }) => {
                     <TopicIcon topic={topic} size="sm" />
                     <div className="min-w-0">
                         <p className="truncate font-semibold">{topic.name}</p>
-                        <p className="text-xs text-muted">{roomCode ? `Room ${roomCode}` : 'Solo practice'}</p>
+                        <p className="text-xs text-muted">{roomCode ? `Room ${roomCode}` : topic.id === 'review' ? 'Practise what you missed' : 'Solo practice'}</p>
                     </div>
                 </div>
                 <button type="button" onClick={onQuit} className="btn btn-ghost btn-sm">

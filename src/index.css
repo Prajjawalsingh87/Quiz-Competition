@@ -195,6 +195,10 @@
     @apply text-xs font-semibold tracking-[0.12em] text-brand-ink uppercase;
   }
 
+  .kbd {
+    @apply inline-flex min-w-5 items-center justify-center rounded border border-line bg-surface-2 px-1.5 py-0.5 font-sans text-[11px] font-medium text-muted;
+  }
+
   .icon-tile {
     @apply flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-ink;
   }

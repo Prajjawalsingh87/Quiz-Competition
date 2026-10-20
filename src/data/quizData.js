@@ -76,6 +76,29 @@ export const SECONDS_PER_QUESTION = 20;
 
 export const getTopic = (id) => TOPICS.find((t) => t.id === id);
 
+// Pseudo-topic used for "review my mistakes" rounds.
+export const REVIEW_TOPIC = {
+    id: 'review',
+    name: 'Mistake review',
+    description: 'Questions you missed before.',
+    color: '#c92a2a',
+    icon: 'review',
+};
+
+export const REVIEW_SIZE = 10;
+
+// Topic (real or review) for display, e.g. in history rows.
+export const topicMeta = (id) => getTopic(id) || (id === REVIEW_TOPIC.id ? REVIEW_TOPIC : undefined);
+
+// Find the full question (and its topic) from a saved mistake. Stale entries are dropped.
+export const questionsForMistakes = (mistakes) => mistakes
+    .map((m) => {
+        const topic = getTopic(m.topicId);
+        const question = topic?.questions.find((item) => item.q === m.q);
+        return question ? { ...question, topicId: topic.id } : null;
+    })
+    .filter(Boolean);
+
 // Stable topic for a room code, so everyone joining the same room gets the same set.
 export const topicForRoom = (code) => {
     const sum = [...code].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);

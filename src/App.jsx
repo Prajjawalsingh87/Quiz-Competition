@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Home as HomeIcon, Swords, History as HistoryIcon, UserRound, Users, MessageCircle, Search as SearchIcon } from 'lucide-react';
 import Navbar from './components/Navbar';
+import SearchPalette from './components/SearchPalette';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
@@ -26,6 +27,7 @@ const navLinks = [
 
 function App() {
   const [user, setUser] = useState(() => loadUser());
+  const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -33,6 +35,18 @@ function App() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [pathname]);
+
+  // Ctrl+K / ⌘K opens global search from anywhere.
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const handleLogin = (email) => {
     const nextUser = { email, name: email.split('@')[0], joinedAt: new Date().toISOString() };
@@ -51,7 +65,8 @@ function App() {
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-lg focus:bg-surface focus:px-4 focus:py-2 focus:shadow-lift">
         Skip to content
       </a>
-      <Navbar links={navLinks} user={user} onLogout={handleLogout} />
+      <Navbar links={navLinks} user={user} onLogout={handleLogout} onOpenSearch={() => setSearchOpen(true)} />
+      {searchOpen && <SearchPalette onClose={() => setSearchOpen(false)} />}
 
       <main id="main" className="container-page flex-1 pt-24 pb-8 sm:pt-28">
         <Routes>

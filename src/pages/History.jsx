@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { History as HistoryIcon, Trophy, Target, Gamepad2, Trash2, ArrowRight, Users } from 'lucide-react';
 import { loadHistory, clearHistory, getStats, formatDate } from '../utils/storage';
-import { getTopic } from '../data/quizData';
+import { topicMeta } from '../data/quizData';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 import TopicIcon from '../components/TopicIcon';
@@ -27,6 +27,19 @@ const History = () => {
     useDocumentTitle('History');
     const [history, setHistory] = useState(() => loadHistory());
     const stats = useMemo(() => getStats(history), [history]);
+    const { hash, state } = useLocation();
+    const highlightId = hash.startsWith('#game-') ? hash.slice('#game-'.length) : null;
+
+    // Coming from search: bring the chosen game into view (after the app's scroll-to-top).
+    useEffect(() => {
+        if (!highlightId) return undefined;
+        const id = setTimeout(() => {
+            const row = document.getElementById(`game-${highlightId}`);
+            row?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            row?.focus({ preventScroll: true });
+        }, 60);
+        return () => clearTimeout(id);
+    }, [highlightId, state]);
 
     const handleClear = () => {
         if (window.confirm('Clear your entire quiz history? This can’t be undone.')) {
@@ -70,9 +83,16 @@ const History = () => {
                         <ul>
                             {history.map((r) => {
                                 const pct = Math.round((r.correct / r.total) * 100);
-                                const topic = getTopic(r.topicId);
+                                const topic = topicMeta(r.topicId);
+                                const highlighted = r.id === highlightId;
                                 return (
-                                    <li key={r.id} className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 border-b border-line px-5 py-4 last:border-0 md:grid-cols-[1fr_8rem_6rem_9rem]">
+                                    <li
+                                        key={r.id}
+                                        id={`game-${r.id}`}
+                                        tabIndex={highlighted ? -1 : undefined}
+                                        aria-current={highlighted ? 'true' : undefined}
+                                        className={`grid scroll-mt-24 grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 border-b border-line px-5 py-4 transition-colors last:border-0 md:grid-cols-[1fr_8rem_6rem_9rem] ${highlighted ? 'bg-brand-soft shadow-[inset_3px_0_0_var(--brand)] outline-none' : ''}`}
+                                    >
                                         <div className="flex min-w-0 items-center gap-3">
                                             <TopicIcon topic={topic} size="sm" />
                                             <div className="min-w-0">

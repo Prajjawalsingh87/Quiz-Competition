@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Menu, X, LogOut, LogIn } from 'lucide-react';
+import { Menu, X, LogOut, LogIn, Search as SearchIcon } from 'lucide-react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import Logo from './Logo';
 import Avatar from './Avatar';
 
-const Navbar = ({ links = [], user, onLogout }) => {
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+
+const Navbar = ({ links = [], user, onLogout, onOpenSearch }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const location = useLocation();
@@ -60,6 +62,17 @@ const Navbar = ({ links = [], user, onLogout }) => {
 
                 {/* Actions */}
                 <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={onOpenSearch}
+                        className="btn btn-ghost size-10 px-0 xl:w-auto xl:gap-2 xl:border xl:border-line xl:bg-surface xl:px-2.5"
+                        aria-keyshortcuts="Control+K Meta+K"
+                        title={`Search (${isMac ? '⌘K' : 'Ctrl+K'})`}
+                    >
+                        <SearchIcon className="size-[18px]" aria-hidden="true" />
+                        <span className="sr-only">Search everything</span>
+                        <kbd className="kbd hidden xl:inline-flex" aria-hidden="true">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
+                    </button>
                     {user ? (
                         <>
                             <Link to="/profile" className="flex items-center gap-2 rounded-full p-0.5 pr-1 transition hover:bg-surface-2 sm:pr-3" title="Your profile">
