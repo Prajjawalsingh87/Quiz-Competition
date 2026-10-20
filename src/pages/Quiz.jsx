@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Plus, Users, Link as LinkIcon, ArrowRight, Play, Copy, Check, AlertCircle, CheckCircle2, X } from 'lucide-react';
-import { TOPICS, getTopic, topicForRoom, shuffle, SECONDS_PER_QUESTION } from '../data/quizData';
-import { saveResult } from '../utils/storage';
+import { useLocation, useSearchParams } from 'react-router-dom';
+import { Plus, Users, Link as LinkIcon, ArrowRight, Play, Copy, Check, AlertCircle, CheckCircle2, X, RotateCcw, Trash2 } from 'lucide-react';
+import { TOPICS, getTopic, topicForRoom, shuffle, SECONDS_PER_QUESTION, REVIEW_TOPIC, REVIEW_SIZE, questionsForMistakes } from '../data/quizData';
+import { saveResult, loadMistakes, updateMistakes, clearMistakes } from '../utils/storage';
 import TopicIcon from '../components/TopicIcon';
 import PageHeader from '../components/PageHeader';
 import QuizPlayer from '../components/quiz/QuizPlayer';
@@ -32,15 +32,42 @@ const Quiz = () => {
     const [copied, setCopied] = useState(false);
     const [game, setGame] = useState(null); // { topic, questions, roomCode, key }
     const [result, setResult] = useState(null);
+    const [mistakes, setMistakes] = useState(() => loadMistakes());
+    const location = useLocation();
+
+    // A jump from global search (Ctrl+K) selects that topic, even mid-game.
+    const jump = location.state?.jump;
+    const [seenJump, setSeenJump] = useState(jump);
+    if (jump !== seenJump) {
+        setSeenJump(jump);
+        const target = searchParams.get('topic');
+        if (getTopic(target)) setTopicId(target);
+        setGame(null);
+        setResult(null);
+    }
+
+    const reviewQuestions = questionsForMistakes(mistakes);
 
     useDocumentTitle(game ? (result ? 'Results' : game.topic.name) : 'Play');
 
     const topic = getTopic(topicId);
 
-    const startGame = (gameTopic, roomCode = null) => {
+    const startGame = (gameTopic, roomCode = null, questions = shuffle(gameTopic.questions)) => {
         setResult(null);
-        setGame({ topic: gameTopic, questions: shuffle(gameTopic.questions), roomCode, key: Date.now() });
+        setGame({ topic: gameTopic, questions, roomCode, key: Date.now() });
         window.scrollTo({ top: 0 });
+    };
+
+    const startReview = (list = reviewQuestions) => {
+        if (!list.length) return;
+        startGame(REVIEW_TOPIC, null, shuffle(list).slice(0, REVIEW_SIZE));
+    };
+
+    const handleClearMistakes = () => {
+        if (window.confirm('Clear your list of missed questions?')) {
+            clearMistakes();
+            setMistakes([]);
+        }
     };
 
     const selectTopic = (id) => {
@@ -92,8 +119,10 @@ const Quiz = () => {
             correct,
             total: finalResult.answers.length,
             score: finalResult.score,
+            missed: finalResult.answers.filter((a) => !a.correct).map((a) => a.question),
             date: new Date().toISOString(),
         });
+        setMistakes(updateMistakes(finalResult.answers));
         setResult(finalResult);
         window.scrollTo({ top: 0 });
     };
@@ -104,7 +133,18 @@ const Quiz = () => {
     };
 
     if (game && result) {
-        return <QuizResults topic={game.topic} result={result} onReplay={() => startGame(game.topic, game.roomCode)} onExit={exitGame} />;
+        const isReview = game.topic.id === REVIEW_TOPIC.id;
+        return (
+            <QuizResults
+                topic={game.topic}
+                result={result}
+                onReplay={isReview ? (reviewQuestions.length ? () => startReview() : null) : () => startGame(game.topic, game.roomCode)}
+                replayLabel={isReview ? 'Review again' : 'Play again'}
+                mistakesLeft={reviewQuestions.length}
+                onReview={!isReview && reviewQuestions.length ? () => startReview() : null}
+                onExit={exitGame}
+            />
+        );
     }
 
     if (game) {
@@ -170,6 +210,31 @@ const Quiz = () => {
                 </section>
 
                 <div className="space-y-6">
+                    {/* Review mistakes */}
+                    <section className="card p-5 sm:p-6" aria-labelledby="review-title">
+                        <div className="mb-4 flex items-start gap-4">
+                            <span className="icon-tile bg-danger-soft text-danger"><RotateCcw className="size-5" aria-hidden="true" /></span>
+                            <div className="min-w-0 flex-1">
+                                <h2 id="review-title" className="text-lg font-bold">Review my mistakes</h2>
+                                <p className="text-sm text-muted">
+                                    {reviewQuestions.length
+                                        ? `${reviewQuestions.length} missed question${reviewQuestions.length === 1 ? '' : 's'} saved. Get one right and it leaves the list.`
+                                        : 'Questions you miss will show up here so you can practise them.'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <button type="button" onClick={() => startReview()} disabled={!reviewQuestions.length} className="btn btn-secondary flex-1">
+                                Practise {reviewQuestions.length ? Math.min(reviewQuestions.length, REVIEW_SIZE) : ''} <Play className="size-4 fill-current" aria-hidden="true" />
+                            </button>
+                            {reviewQuestions.length > 0 && (
+                                <button type="button" onClick={handleClearMistakes} className="btn btn-ghost size-11 px-0" title="Clear missed questions">
+                                    <Trash2 className="size-4" aria-hidden="true" /><span className="sr-only">Clear missed questions</span>
+                                </button>
+                            )}
+                        </div>
+                    </section>
+
                     {/* Create room */}
                     <section className="card p-5 sm:p-6" aria-labelledby="create-title">
                         <div className="mb-4 flex items-start gap-4">

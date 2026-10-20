@@ -1,7 +1,7 @@
 import React from 'react';
-import { Globe2, FlaskConical, Code2, Landmark, Map, Sparkles } from 'lucide-react';
+import { Globe2, FlaskConical, Code2, Landmark, Map, Sparkles, RotateCcw } from 'lucide-react';
 
-const ICONS = { globe: Globe2, flask: FlaskConical, code: Code2, landmark: Landmark, map: Map };
+const ICONS = { globe: Globe2, flask: FlaskConical, code: Code2, landmark: Landmark, map: Map, review: RotateCcw };
 
 const TopicIcon = ({ topic, size = 'md' }) => {
     const Icon = ICONS[topic?.icon] || Sparkles;

@@ -1,6 +1,7 @@
 // Tiny localStorage wrapper. Every access is guarded so private mode / blocked storage never crashes the app.
 const HISTORY_KEY = 'aiquiz.history';
 const USER_KEY = 'aiquiz.user';
+const MISTAKES_KEY = 'aiquiz.mistakes';
 
 const read = (key, fallback) => {
     try {
@@ -32,6 +33,27 @@ export const saveResult = (result) => {
 };
 
 export const clearHistory = () => write(HISTORY_KEY, null);
+
+// Questions the player got wrong (or ran out of time on). A correct answer later removes it again.
+export const loadMistakes = () => {
+    const list = read(MISTAKES_KEY, []);
+    return Array.isArray(list) ? list.filter((m) => m && typeof m.q === 'string' && typeof m.topicId === 'string') : [];
+};
+
+// answers: [{ question, topicId, correct }]
+export const updateMistakes = (answers) => {
+    const byQuestion = new Map(loadMistakes().map((m) => [m.q, m]));
+    answers.forEach((a) => {
+        if (!a.topicId) return;
+        if (a.correct) byQuestion.delete(a.question);
+        else byQuestion.set(a.question, { q: a.question, topicId: a.topicId, missedAt: new Date().toISOString() });
+    });
+    const next = [...byQuestion.values()].slice(-100);
+    write(MISTAKES_KEY, next.length ? next : null);
+    return next;
+};
+
+export const clearMistakes = () => write(MISTAKES_KEY, null);
 
 export const loadUser = () => read(USER_KEY, null);
 export const saveUser = (user) => write(USER_KEY, user);
