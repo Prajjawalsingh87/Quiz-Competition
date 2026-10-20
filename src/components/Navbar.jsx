@@ -3,6 +3,7 @@ import { Menu, X, LogOut, LogIn, Search as SearchIcon } from 'lucide-react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import Logo from './Logo';
 import Avatar from './Avatar';
+import { InstallButton, InstallMenuItem, ThemeToggle } from '../shell/AppControls';
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
@@ -61,7 +62,8 @@ const Navbar = ({ links = [], user, onLogout, onOpenSearch }) => {
                 </ul>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                    <InstallButton />
                     <button
                         type="button"
                         onClick={onOpenSearch}
@@ -73,6 +75,7 @@ const Navbar = ({ links = [], user, onLogout, onOpenSearch }) => {
                         <span className="sr-only">Search everything</span>
                         <kbd className="kbd hidden xl:inline-flex" aria-hidden="true">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
                     </button>
+                    <ThemeToggle />
                     {user ? (
                         <>
                             <Link to="/profile" className="flex items-center gap-2 rounded-full p-0.5 pr-1 transition hover:bg-surface-2 sm:pr-3" title="Your profile">
@@ -128,6 +131,7 @@ const Navbar = ({ links = [], user, onLogout, onOpenSearch }) => {
                             </NavLink>
                         </li>
                     ))}
+                    <InstallMenuItem />
                     {user && (
                         <li>
                             <button
