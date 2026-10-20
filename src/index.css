@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* dark: utilities follow the theme toggle (data-theme on <html>), not just the OS setting. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ---------- Design tokens ---------- */
 :root {
   --bg: #f6f7fb;
@@ -16,33 +19,33 @@
   --success-soft: #e5f6ec;
   --danger: #c92a2a;
   --danger-soft: #fdecec;
-  --warning: #a16207;
+  --warning: #965a05;
   --warning-soft: #fdf3d8;
   --shadow-color: 228 30% 40%;
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b0d17;
-    --surface: #131628;
-    --surface-2: #1b1f35;
-    --fg: #eef0fa;
-    --muted: #a4a9c4;
-    --line: #272c47;
-    --brand: #6d5cff;
-    --brand-strong: #8172ff;
-    --brand-soft: rgb(109 92 255 / 0.16);
-    --brand-ink: #b3a9ff;
-    --success: #34d399;
-    --success-soft: rgb(52 211 153 / 0.14);
-    --danger: #f87171;
-    --danger-soft: rgb(248 113 113 / 0.14);
-    --warning: #fbbf24;
-    --warning-soft: rgb(251 191 36 / 0.14);
-    --shadow-color: 230 50% 2%;
-    color-scheme: dark;
-  }
+/* Dark palette: applied when <html data-theme="dark">. index.html picks the saved
+   choice or the OS preference before first paint; src/shell/useTheme.js toggles it. */
+:root[data-theme="dark"] {
+  --bg: #0b0d17;
+  --surface: #131628;
+  --surface-2: #1b1f35;
+  --fg: #eef0fa;
+  --muted: #a4a9c4;
+  --line: #272c47;
+  --brand: #6d5cff;
+  --brand-strong: #8172ff;
+  --brand-soft: rgb(109 92 255 / 0.16);
+  --brand-ink: #b3a9ff;
+  --success: #34d399;
+  --success-soft: rgb(52 211 153 / 0.14);
+  --danger: #f87171;
+  --danger-soft: rgb(248 113 113 / 0.14);
+  --warning: #fbbf24;
+  --warning-soft: rgb(251 191 36 / 0.14);
+  --shadow-color: 230 50% 2%;
+  color-scheme: dark;
 }
 
 @theme inline {
