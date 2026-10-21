@@ -28,6 +28,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         cleanupOutdatedCaches: true,
+        // API calls must always hit the network; never answer them with the cached app shell.
+        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
             // Inter / Plus Jakarta Sans font CSS and files, so the app looks right offline.

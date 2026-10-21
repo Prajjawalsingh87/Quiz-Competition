@@ -1,43 +1,18 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, XCircle, Timer, ArrowRight, LogOut, Flame } from 'lucide-react';
-import { SECONDS_PER_QUESTION } from '../../data/quizData';
+import { getDifficulty, pointsFor, DEFAULT_DIFFICULTY } from '../../shared/game';
 import TopicIcon from '../TopicIcon';
+import AnswerOption from './AnswerOption';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
 
-const optionClass = (state) => {
-    switch (state) {
-        case 'correct':
-            return 'border-success bg-success-soft ring-2 ring-success/25';
-        case 'wrong':
-            return 'border-danger bg-danger-soft ring-2 ring-danger/25 animate-shake';
-        case 'selected':
-            return 'border-brand bg-brand-soft ring-2 ring-brand/25';
-        case 'dimmed':
-            return 'border-line opacity-60';
-        default:
-            return 'border-line bg-surface hover:border-brand/50 hover:bg-surface-2';
-    }
-};
-
-const badgeClass = (state) => {
-    switch (state) {
-        case 'correct':
-            return 'bg-success text-white';
-        case 'wrong':
-            return 'bg-danger text-white';
-        case 'selected':
-            return 'bg-brand text-white';
-        default:
-            return 'bg-surface-2 text-muted group-hover:text-fg';
-    }
-};
-
-const QuizPlayer = ({ topic, questions, roomCode, onFinish, onQuit }) => {
+const QuizPlayer = ({ topic, questions, difficulty = DEFAULT_DIFFICULTY, onFinish, onQuit }) => {
+    const { seconds, label: difficultyLabel } = getDifficulty(difficulty);
+    const startedAt = useRef(null);
     const [index, setIndex] = useState(0);
     const [selected, setSelected] = useState(null);
     const [revealed, setRevealed] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(SECONDS_PER_QUESTION);
+    const [timeLeft, setTimeLeft] = useState(seconds);
     const [answers, setAnswers] = useState([]);
     const [score, setScore] = useState(0);
     const [streak, setStreak] = useState(0);
@@ -47,12 +22,17 @@ const QuizPlayer = ({ topic, questions, roomCode, onFinish, onQuit }) => {
 
     const reveal = useCallback((choice) => {
         const correct = choice === question.answer;
-        const points = correct ? 100 + timeLeft * 5 : 0;
+        const points = correct ? pointsFor(difficulty, timeLeft) : 0;
         setRevealed(true);
         setScore((s) => s + points);
         setStreak((s) => (correct ? s + 1 : 0));
         setAnswers((prev) => [...prev, { question: question.q, topicId: question.topicId || topic.id, options: question.options, answer: question.answer, chosen: choice, correct, points }]);
-    }, [question, timeLeft, topic.id]);
+    }, [question, timeLeft, topic.id, difficulty]);
+
+    // Wall-clock length of the round, sent with leaderboard submissions for a plausibility check.
+    useEffect(() => {
+        startedAt.current = Date.now();
+    }, []);
 
     // Countdown — runs out to an automatic "no answer".
     useEffect(() => {
@@ -70,14 +50,14 @@ const QuizPlayer = ({ topic, questions, roomCode, onFinish, onQuit }) => {
 
     const next = useCallback(() => {
         if (isLast) {
-            onFinish({ answers, score });
+            onFinish({ answers, score, durationMs: Date.now() - (startedAt.current ?? Date.now()) });
             return;
         }
         setIndex((i) => i + 1);
         setSelected(null);
         setRevealed(false);
-        setTimeLeft(SECONDS_PER_QUESTION);
-    }, [isLast, onFinish, answers, score]);
+        setTimeLeft(seconds);
+    }, [isLast, onFinish, answers, score, seconds]);
 
     // Keyboard: 1-4 / A-D to pick, Enter to check or continue.
     useEffect(() => {
@@ -105,8 +85,8 @@ const QuizPlayer = ({ topic, questions, roomCode, onFinish, onQuit }) => {
 
     const lastAnswer = revealed ? answers[answers.length - 1] : null;
     const progress = ((index + (revealed ? 1 : 0)) / questions.length) * 100;
-    const timePct = (timeLeft / SECONDS_PER_QUESTION) * 100;
-    const timeTone = timeLeft <= 5 ? 'text-danger bg-danger-soft' : timeLeft <= 10 ? 'text-warning bg-warning-soft' : 'text-brand-ink bg-brand-soft';
+    const timePct = (timeLeft / seconds) * 100;
+    const timeTone = timeLeft <= Math.min(5, seconds / 4) ? 'text-danger bg-danger-soft' : timeLeft <= seconds / 2 ? 'text-warning bg-warning-soft' : 'text-brand-ink bg-brand-soft';
 
     return (
         <div className="mx-auto max-w-3xl animate-fade-up">
@@ -116,7 +96,7 @@ const QuizPlayer = ({ topic, questions, roomCode, onFinish, onQuit }) => {
                     <TopicIcon topic={topic} size="sm" />
                     <div className="min-w-0">
                         <p className="truncate font-semibold">{topic.name}</p>
-                        <p className="text-xs text-muted">{roomCode ? `Room ${roomCode}` : topic.id === 'review' ? 'Practise what you missed' : 'Solo practice'}</p>
+                        <p className="text-xs text-muted">{topic.id === 'review' ? 'Practise what you missed' : `Solo practice · ${difficultyLabel}`}</p>
                     </div>
                 </div>
                 <button type="button" onClick={onQuit} className="btn btn-ghost btn-sm">
@@ -160,7 +140,7 @@ const QuizPlayer = ({ topic, questions, roomCode, onFinish, onQuit }) => {
             <div className="card overflow-hidden">
                 <div className="h-1 bg-line/60" aria-hidden="true">
                     <div
-                        className={`h-full transition-[width] duration-1000 ease-linear ${timeLeft <= 5 ? 'bg-danger' : timeLeft <= 10 ? 'bg-warning' : 'bg-brand'}`}
+                        className={`h-full transition-[width] duration-1000 ease-linear ${timeLeft <= Math.min(5, seconds / 4) ? 'bg-danger' : timeLeft <= seconds / 2 ? 'bg-warning' : 'bg-brand'}`}
                         style={{ width: `${revealed ? 0 : timePct}%` }}
                     />
                 </div>
@@ -173,27 +153,17 @@ const QuizPlayer = ({ topic, questions, roomCode, onFinish, onQuit }) => {
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Answers">
-                        {question.options.map((opt, i) => {
-                            const state = stateFor(i);
-                            return (
-                                <button
-                                    key={opt}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={selected === i}
-                                    disabled={revealed}
-                                    onClick={() => setSelected(i)}
-                                    className={`group flex min-h-14 w-full items-center gap-3 rounded-xl border-2 px-4 py-3 text-left text-[15px] font-medium transition-all duration-150 disabled:cursor-default ${optionClass(state)}`}
-                                >
-                                    <span className={`flex size-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold transition-colors ${badgeClass(state)}`}>
-                                        {LETTERS[i]}
-                                    </span>
-                                    <span className="flex-1">{opt}</span>
-                                    {state === 'correct' && <CheckCircle2 className="size-5 shrink-0 text-success" aria-label="Correct answer" />}
-                                    {state === 'wrong' && <XCircle className="size-5 shrink-0 text-danger" aria-label="Your answer" />}
-                                </button>
-                            );
-                        })}
+                        {question.options.map((opt, i) => (
+                            <AnswerOption
+                                key={opt}
+                                index={i}
+                                label={opt}
+                                state={stateFor(i)}
+                                checked={selected === i}
+                                disabled={revealed}
+                                onSelect={() => setSelected(i)}
+                            />
+                        ))}
                     </div>
 
                     {/* Feedback */}

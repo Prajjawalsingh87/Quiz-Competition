@@ -1,12 +1,12 @@
 import React from 'react';
-import { Globe2, FlaskConical, Code2, Landmark, Map, Sparkles, RotateCcw } from 'lucide-react';
+import { Globe2, FlaskConical, Code2, Landmark, Map, Sparkles, RotateCcw, Shuffle } from 'lucide-react';
 
-const ICONS = { globe: Globe2, flask: FlaskConical, code: Code2, landmark: Landmark, map: Map, review: RotateCcw };
+const ICONS = { globe: Globe2, flask: FlaskConical, code: Code2, landmark: Landmark, map: Map, review: RotateCcw, mixed: Shuffle };
 
 const TopicIcon = ({ topic, size = 'md' }) => {
     const Icon = ICONS[topic?.icon] || Sparkles;
-    const box = size === 'lg' ? 'size-12 rounded-2xl' : size === 'sm' ? 'size-9 rounded-lg' : 'size-11 rounded-xl';
-    const icon = size === 'lg' ? 'size-6' : size === 'sm' ? 'size-4' : 'size-5';
+    const box = { lg: 'size-12 rounded-2xl', sm: 'size-9 rounded-lg', xs: 'size-5 rounded-md' }[size] || 'size-11 rounded-xl';
+    const icon = { lg: 'size-6', sm: 'size-4', xs: 'size-3' }[size] || 'size-5';
     return (
         <span
             className={`${box} flex shrink-0 items-center justify-center`}

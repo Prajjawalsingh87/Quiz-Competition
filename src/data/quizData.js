@@ -87,8 +87,8 @@ export const REVIEW_TOPIC = {
 
 export const REVIEW_SIZE = 10;
 
-// Topic (real or review) for display, e.g. in history rows.
-export const topicMeta = (id) => getTopic(id) || (id === REVIEW_TOPIC.id ? REVIEW_TOPIC : undefined);
+// Topic (real, review or mixed) for display, e.g. in history rows.
+export const topicMeta = (id) => getTopic(id) || [REVIEW_TOPIC, MIXED_TOPIC].find((t) => t.id === id);
 
 // Find the full question (and its topic) from a saved mistake. Stale entries are dropped.
 export const questionsForMistakes = (mistakes) => mistakes
@@ -99,11 +99,21 @@ export const questionsForMistakes = (mistakes) => mistakes
     })
     .filter(Boolean);
 
-// Stable topic for a room code, so everyone joining the same room gets the same set.
-export const topicForRoom = (code) => {
-    const sum = [...code].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-    return TOPICS[sum % TOPICS.length];
+// Pseudo-topic for multiplayer rooms: a random mix drawn from every topic.
+export const MIXED_TOPIC = {
+    id: 'mixed',
+    name: 'Mixed bag',
+    description: 'A bit of every topic, shuffled.',
+    color: '#7c3aed',
+    icon: 'mixed',
 };
+
+export const MIXED_SIZE = 8;
+
+// Topics a room can be played on, with how many questions each round has.
+export const ROOM_TOPICS = [...TOPICS, MIXED_TOPIC];
+export const roomTopicMeta = (id) => getTopic(id) || (id === MIXED_TOPIC.id ? MIXED_TOPIC : undefined);
+export const roomQuestionCount = (id) => (id === MIXED_TOPIC.id ? MIXED_SIZE : getTopic(id)?.questions.length || 0);
 
 export const shuffle = (list) => {
     const copy = [...list];

@@ -49,7 +49,7 @@ const Navbar = ({ links = [], user, onLogout, onOpenSearch }) => {
                                 to={link.path}
                                 end={link.path === '/'}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive
+                                    `flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors xl:px-3 ${isActive
                                         ? 'bg-brand-soft text-brand-ink'
                                         : 'text-muted hover:bg-surface-2 hover:text-fg'}`
                                 }

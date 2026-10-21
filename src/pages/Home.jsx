@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, Trophy, Zap, Users, Target, Crown, CheckCircle2, Timer } from 'lucide-react';
 import { TOPICS } from '../data/quizData';
-import { LEADERBOARD } from '../data/socialData';
+import useLeaderboard from '../utils/useLeaderboard';
+import { colorForName, rankTone } from '../utils/format';
 import { loadHistory, getStats } from '../utils/storage';
 import TopicIcon from '../components/TopicIcon';
 import Avatar from '../components/Avatar';
@@ -50,6 +51,57 @@ const PreviewCard = () => (
         </div>
     </div>
 );
+
+// Live top 5 from the global leaderboard.
+const HomeLeaderboard = () => {
+    const { entries, loading, error } = useLeaderboard();
+    const top = entries.slice(0, 5);
+    return (
+        <div id="leaderboard" className="card scroll-mt-24 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-line px-5 py-4">
+                <div className="flex items-center gap-2">
+                    <Trophy className="size-5 text-amber-500" aria-hidden="true" />
+                    <h2 className="text-lg font-bold">Leaderboard</h2>
+                </div>
+                <Link to="/leaderboard" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-ink hover:underline">
+                    See top 20 <ArrowRight className="size-4" aria-hidden="true" />
+                </Link>
+            </div>
+            {loading ? (
+                <ol aria-busy="true">
+                    {Array.from({ length: 5 }, (_, i) => (
+                        <li key={i} className="flex animate-pulse items-center gap-3 border-b border-line px-5 py-3.5 last:border-0" aria-hidden="true">
+                            <span className="h-4 w-6 rounded bg-surface-2" />
+                            <span className="size-9 rounded-full bg-surface-2" />
+                            <span className="h-4 flex-1 rounded bg-surface-2" />
+                        </li>
+                    ))}
+                </ol>
+            ) : !top.length ? (
+                <div className="px-5 py-10 text-center">
+                    <p className="font-semibold">{error ? 'The leaderboard is offline right now.' : 'No scores yet.'}</p>
+                    <p className="mt-1 text-sm text-muted">{error ? 'Try again in a moment.' : 'Finish a solo round and post the first score.'}</p>
+                </div>
+            ) : (
+                <ol>
+                    {top.map((p, i) => (
+                        <li key={`${p.nickname}-${p.rank}`} className="flex items-center gap-3 border-b border-line px-5 py-3 last:border-0">
+                            <span className={`w-6 text-center font-display font-bold tabular-nums ${rankTone(i)}`}>{p.rank}</span>
+                            <Avatar name={p.nickname} color={colorForName(p.nickname)} size="sm" />
+                            <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold">{p.nickname}</p>
+                                <p className="truncate text-xs text-muted">{topicName(p.topicId)} · {p.correct}/{p.total} correct</p>
+                            </div>
+                            <span className="text-sm font-semibold tabular-nums">{p.score.toLocaleString()} <span className="font-normal text-muted">pts</span></span>
+                        </li>
+                    ))}
+                </ol>
+            )}
+        </div>
+    );
+};
+
+const topicName = (id) => TOPICS.find((t) => t.id === id)?.name ?? id;
 
 const Home = ({ user }) => {
     useDocumentTitle();
@@ -150,37 +202,14 @@ const Home = ({ user }) => {
                     </ol>
                 </div>
 
-                <div id="leaderboard" className="card scroll-mt-24 overflow-hidden">
-                    <div className="flex items-center justify-between border-b border-line px-5 py-4">
-                        <div className="flex items-center gap-2">
-                            <Trophy className="size-5 text-amber-500" aria-hidden="true" />
-                            <h2 className="text-lg font-bold">Leaderboard</h2>
-                        </div>
-                        <span className="badge bg-surface-2 text-muted">This week</span>
-                    </div>
-                    <ol>
-                        {LEADERBOARD.slice(0, 5).map((p, i) => (
-                            <li key={p.id} className="flex items-center gap-3 border-b border-line px-5 py-3 last:border-0">
-                                <span className={`w-6 text-center font-display font-bold tabular-nums ${i === 0 ? 'text-amber-500' : i === 1 ? 'text-slate-400' : i === 2 ? 'text-orange-400' : 'text-muted'}`}>
-                                    {i + 1}
-                                </span>
-                                <Avatar name={p.name} color={p.color} size="sm" />
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-semibold">{p.name}</p>
-                                    <p className="truncate text-xs text-muted">{p.handle}</p>
-                                </div>
-                                <span className="text-sm font-semibold tabular-nums">{p.xp.toLocaleString()} <span className="font-normal text-muted">XP</span></span>
-                            </li>
-                        ))}
-                    </ol>
-                </div>
+                <HomeLeaderboard />
             </section>
 
             {/* CTA */}
             <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand to-[#7c3aed] px-6 py-12 text-center text-white sm:px-12">
                 <div className="absolute -top-24 -right-24 size-72 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
                 <h2 className="relative text-2xl font-bold text-white sm:text-3xl">Ready to play?</h2>
-                <p className="relative mx-auto mt-3 max-w-lg text-white/85">Five questions, twenty seconds each. See how far you can push your score.</p>
+                <p className="relative mx-auto mt-3 max-w-lg text-white/85">Five questions against the clock. Post your best to the global leaderboard.</p>
                 <div className="relative mt-7 flex flex-col justify-center gap-3 sm:flex-row">
                     <Link to="/quiz" className="btn btn-lg bg-white text-[#4a3bd9] hover:bg-white/90">Play now <ArrowRight className="size-5" aria-hidden="true" /></Link>
                     {!user && <Link to="/login" className="btn btn-lg border border-white/30 text-white hover:bg-white/10">Create an account</Link>}
