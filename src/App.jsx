@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { Home as HomeIcon, Swords, History as HistoryIcon, UserRound, Users, MessageCircle, Search as SearchIcon } from 'lucide-react';
+import { Home as HomeIcon, Swords, Trophy, History as HistoryIcon, UserRound, Users, MessageCircle, Search as SearchIcon } from 'lucide-react';
 import Navbar from './components/Navbar';
 import SearchPalette from './components/SearchPalette';
 import Footer from './components/Footer';
@@ -11,6 +11,8 @@ import Chat from './pages/Chat';
 import Search from './pages/Search';
 import Quiz from './pages/Quiz';
 import History from './pages/History';
+import Room from './pages/Room';
+import Leaderboard from './pages/Leaderboard';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import { loadUser, saveUser } from './utils/storage';
@@ -18,6 +20,7 @@ import { loadUser, saveUser } from './utils/storage';
 const navLinks = [
   { name: 'Home', path: '/', icon: HomeIcon },
   { name: 'Quiz', path: '/quiz', icon: Swords },
+  { name: 'Leaderboard', path: '/leaderboard', icon: Trophy },
   { name: 'History', path: '/history', icon: HistoryIcon },
   { name: 'Profile', path: '/profile', icon: UserRound },
   { name: 'Friends', path: '/friends', icon: Users },
@@ -72,6 +75,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Home user={user} />} />
           <Route path="/quiz" element={<Quiz />} />
+          <Route path="/room/:code" element={<Room />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/history" element={<History />} />
           <Route path="/profile" element={<Profile user={user} onLogout={handleLogout} />} />
           <Route path="/friends" element={<Friends />} />

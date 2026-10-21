@@ -77,3 +77,29 @@ export const formatDate = (iso) => {
         return '';
     }
 };
+
+// Nickname used for rooms and the global leaderboard.
+const NICKNAME_KEY = 'aiquiz.nickname';
+export const loadNickname = () => {
+    const value = read(NICKNAME_KEY, '');
+    return typeof value === 'string' ? value : '';
+};
+export const saveNickname = (nickname) => write(NICKNAME_KEY, nickname || null);
+
+// Room sessions: the secret player token for each room joined, so a refresh rejoins the same seat.
+const ROOMS_KEY = 'aiquiz.rooms';
+const ROOM_SESSION_TTL_MS = 6 * 60 * 60 * 1000;
+const loadRoomSessions = () => {
+    const map = read(ROOMS_KEY, {});
+    return map && typeof map === 'object' && !Array.isArray(map) ? map : {};
+};
+export const loadRoomSession = (code) => {
+    const session = loadRoomSessions()[code];
+    return session && typeof session.token === 'string' ? session : null;
+};
+export const saveRoomSession = (code, session) => {
+    const now = Date.now();
+    const kept = Object.entries(loadRoomSessions()).filter(([key, s]) => key !== code && now - (s?.savedAt || 0) < ROOM_SESSION_TTL_MS);
+    const next = Object.fromEntries(session ? [...kept, [code, { ...session, savedAt: now }]] : kept);
+    write(ROOMS_KEY, Object.keys(next).length ? next : null);
+};

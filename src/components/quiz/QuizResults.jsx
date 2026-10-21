@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { RotateCcw, LayoutGrid, History as HistoryIcon, CheckCircle2, XCircle, Trophy, Target, Zap } from 'lucide-react';
+import LeaderboardSubmit from './LeaderboardSubmit';
 
 const verdict = (pct) => {
     if (pct === 100) return { title: 'Flawless victory!', note: 'Every single answer right. Legendary.' };
@@ -10,7 +11,7 @@ const verdict = (pct) => {
     return { title: 'Keep practising', note: 'Every expert started here. Try another round!' };
 };
 
-const QuizResults = ({ topic, result, onReplay, replayLabel = 'Play again', onReview, mistakesLeft = 0, onExit }) => {
+const QuizResults = ({ topic, result, submission = null, onReplay, replayLabel = 'Play again', onReview, mistakesLeft = 0, onExit }) => {
     const { answers, score } = result;
     const correct = answers.filter((a) => a.correct).length;
     const pct = Math.round((correct / answers.length) * 100);
@@ -64,6 +65,8 @@ const QuizResults = ({ topic, result, onReplay, replayLabel = 'Play again', onRe
                     <HistoryIcon className="size-4" aria-hidden="true" /> History
                 </Link>
             </div>
+
+            {submission && <LeaderboardSubmit submission={submission} />}
 
             <section className="card p-5 sm:p-6" aria-labelledby="review-title">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
