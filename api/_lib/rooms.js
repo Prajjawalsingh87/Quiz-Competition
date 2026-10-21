@@ -363,7 +363,9 @@ export const submitAnswer = async (request, now = Date.now()) => {
     }
 
     const { correct, points, elapsedMs } = scoreAnswer(room, body.choice, now);
-    const queries = [];
+    // Lock the room row first so concurrent final answers are serialised: under READ COMMITTED each
+    // later statement then sees the other's committed answer and the "everyone answered" check holds.
+    const queries = [sql`SELECT 1 FROM rooms WHERE code = ${code} FOR UPDATE`];
     if (!sameProgress(stored, room)) queries.push(saveProgress(sql, stored, room));
     queries.push(
         sql`INSERT INTO room_answers (room_code, player_id, question_index, choice, correct, points, answer_ms)

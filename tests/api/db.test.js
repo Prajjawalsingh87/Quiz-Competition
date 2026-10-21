@@ -10,6 +10,7 @@ import { submitScore, getLeaderboard } from '../../api/_lib/leaderboard.js';
 import { route } from '../../api/_lib/http.js';
 
 const url = process.env.TEST_DATABASE_URL;
+process.env.IP_HASH_SALT ||= 'test-salt';
 const skip = url ? false : 'TEST_DATABASE_URL not set';
 
 const BASE = 'http://localhost';
@@ -130,6 +131,18 @@ describe('API against Postgres', { skip }, () => {
             assert.deepEqual(done.body.players.map((p) => [p.nickname, p.score, p.correct]), [['Hosty', 240, 1], ['Guesty', 155, 1]]);
             const [{ status }] = await sql`SELECT status FROM rooms WHERE code = ${code}`;
             assert.equal(status, 'finished');
+        });
+
+        it('closes the question early when the last answers arrive at the same time', async () => {
+            const { code, hostToken, guestToken, answers } = await setup();
+            const start = T + 1000;
+            await call(startRoom, req(`/api/rooms/${code}/start`, { method: 'POST', token: hostToken }), start);
+            const q0 = start + COUNTDOWN_MS;
+            const results = await Promise.all([hostToken, guestToken].map((token) => call(submitAnswer,
+                req(`/api/rooms/${code}/answer`, { method: 'POST', token, body: { questionIndex: 0, choice: answers[0] } }), q0 + 1000)));
+            assert.deepEqual(results.map((r) => r.status), [201, 201]);
+            const [{ reveal_at: revealAt }] = await sql`SELECT reveal_at FROM rooms WHERE code = ${code}`;
+            assert.equal(Number(revealAt), q0 + 1000);
         });
 
         it('rejects joins after the start, duplicate nicknames and unknown rooms', async () => {

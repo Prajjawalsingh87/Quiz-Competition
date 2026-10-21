@@ -14,6 +14,11 @@ const useLeaderboard = ({ topicId = 'all', difficulty = 'all' } = {}) => {
         let timer;
         const controller = new AbortController();
         const load = async () => {
+            if (document.visibilityState === 'hidden') {
+                // Background tab: skip the request; visibilitychange reloads when it is shown again.
+                if (!cancelled) timer = setTimeout(load, REFRESH_MS);
+                return;
+            }
             try {
                 const params = new URLSearchParams({ topic: topicId, difficulty });
                 const res = await apiFetch(`/api/leaderboard?${params}`, { signal: controller.signal });
@@ -23,11 +28,18 @@ const useLeaderboard = ({ topicId = 'all', difficulty = 'all' } = {}) => {
             }
             if (!cancelled) timer = setTimeout(load, REFRESH_MS);
         };
+        const onVisibility = () => {
+            if (document.visibilityState !== 'visible' || cancelled) return;
+            clearTimeout(timer);
+            load();
+        };
+        document.addEventListener('visibilitychange', onVisibility);
         load();
         return () => {
             cancelled = true;
             controller.abort();
             clearTimeout(timer);
+            document.removeEventListener('visibilitychange', onVisibility);
         };
     }, [key, topicId, difficulty, retry]);
 

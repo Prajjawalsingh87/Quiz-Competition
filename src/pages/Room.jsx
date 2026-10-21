@@ -300,6 +300,26 @@ const FinalResults = ({ state }) => {
     );
 };
 
+// Keep a finished room game in local history, once per room (the stored session remembers it).
+const recordFinishedGame = (code, data) => {
+    const stored = loadRoomSession(code);
+    if (!data.review || !data.me || !stored || stored.saved) return;
+    saveRoomSession(code, { ...stored, saved: true });
+    const me = data.players.find((p) => p.id === data.me.id);
+    saveResult({
+        id: `${Date.now()}`,
+        topicId: data.topic.id,
+        topicName: data.topic.name,
+        roomCode: data.code,
+        difficulty: data.difficulty,
+        correct: data.review.filter((a) => a.correct).length,
+        total: data.review.length,
+        score: me?.score ?? 0,
+        missed: data.review.filter((a) => !a.correct).map((a) => a.question),
+        date: new Date().toISOString(),
+    });
+};
+
 // ---------- Page ----------
 
 const Room = () => {
@@ -353,7 +373,10 @@ const Room = () => {
                     saveRoomSession(code, null);
                     setSession(null);
                 }
-                if (data.phase === 'finished') return;
+                if (data.phase === 'finished') {
+                    recordFinishedGame(code, data);
+                    return;
+                }
                 let delay = document.hidden ? HIDDEN_POLL_MS : POLL_MS;
                 if (data.phaseEndsAt) {
                     const untilEnd = data.phaseEndsAt - (Date.now() + offsetMs);
@@ -429,27 +452,6 @@ const Room = () => {
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
     }, [answering, selected, state, submitAnswer]);
-
-    // Keep finished room games in local history, once.
-    useEffect(() => {
-        if (state?.phase !== 'finished' || !state.review || !session || session.saved) return;
-        const me = state.players.find((p) => p.id === state.me.id);
-        saveResult({
-            id: `${Date.now()}`,
-            topicId: state.topic.id,
-            topicName: state.topic.name,
-            roomCode: state.code,
-            difficulty: state.difficulty,
-            correct: state.review.filter((a) => a.correct).length,
-            total: state.review.length,
-            score: me?.score ?? 0,
-            missed: state.review.filter((a) => !a.correct).map((a) => a.question),
-            date: new Date().toISOString(),
-        });
-        const next = { ...session, saved: true };
-        saveRoomSession(code, next);
-        setSession(next);
-    }, [state, session, code]);
 
     const join = async (nickname) => {
         const check = validateNickname(nickname);

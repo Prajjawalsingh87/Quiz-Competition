@@ -42,8 +42,15 @@ export const clientIp = (request) => {
 
 export const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
-// IPs are only stored hashed (rate limits, leaderboard abuse tracing).
-export const hashIp = (ip) => sha256(`${process.env.IP_HASH_SALT || 'quiz-competition'}:${ip}`);
+// IPs are only stored hashed (rate limits, leaderboard abuse tracing), with a secret salt so the
+// small IPv4 space cannot be brute-forced from a data dump. IP_HASH_SALT is preferred; otherwise the
+// salt is derived from DATABASE_URL, which is itself a secret. Never a public constant.
+const ipSalt = () => {
+    const salt = process.env.IP_HASH_SALT || (process.env.DATABASE_URL && sha256(`ip-salt:${process.env.DATABASE_URL}`));
+    if (!salt) throw Object.assign(new Error('IP_HASH_SALT is not configured'), { status: 503, expose: true, publicMessage: 'The game server is not configured yet.' });
+    return salt;
+};
+export const hashIp = (ip) => sha256(`${ipSalt()}:${ip}`);
 
 export const playerToken = (request) => {
     const token = request.headers.get('x-player-token');

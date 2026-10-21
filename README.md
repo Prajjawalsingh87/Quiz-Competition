@@ -106,7 +106,7 @@ Errors are JSON `{ error, code? }` with `400/401/403/404/409/410/413/415/422/429
 | Name | Where | Purpose |
 | --- | --- | --- |
 | `DATABASE_URL` | Vercel (set by the Neon Marketplace integration) | **Pooled** Neon connection string used by the API (Neon HTTP driver). Required. |
-| `IP_HASH_SALT` | Vercel, optional | Salt for hashing client IPs in rate limits / scores. |
+| `IP_HASH_SALT` | Vercel (secret, recommended) | Secret salt for hashing client IPs in rate limits / scores. If unset, a salt is derived from `DATABASE_URL` (also secret); there is never a public fallback. |
 | `TEST_DATABASE_URL` | local / CI only | Throwaway Postgres for the API tests. |
 
 The Neon integration also adds `DATABASE_URL_UNPOOLED`, `PG*` and `POSTGRES_*` variables; the app does not use them. Tables are created idempotently (`CREATE TABLE IF NOT EXISTS`) on each instance's first request. Functions run in `sin1` (Singapore), next to the database.
